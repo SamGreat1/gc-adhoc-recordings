@@ -71,9 +71,9 @@ function triggerRecording(isRecording) {
         .then((data) => {
             console.log(`patchConversationsChatParticipant success! data: ${JSON.stringify(data, null, 2)}`);
             localStorage.setItem('participantId', myParams.participantId);
-            document.getElementById("send").disabled = isRecording;
-            document.getElementById("cancel").disabled = !isRecording;
-            document.getElementById("save").disabled = isRecording;
+            document.getElementById("send").disabled = isRecording ? true : false;;
+            document.getElementById("cancel").disabled = isRecording ? false : true;
+            document.getElementById("save").disabled = isRecording ? false : true;
             resolve();
 
     
