@@ -46,7 +46,8 @@ client.loginImplicitGrant("1b831a39-844c-4dce-9f7a-2ec29a88ddae", redirectUri, {
     if (data?.state?.conversationId) {
         myParams = data.state;
         document.getElementById("send").disabled = false;
-        document.getElementById("cancel").disabled = false;
+        document.getElementById("cancel").disabled = true;
+        document.getElementById("save").disabled = true;
     };      
     console.log(myParams); 
 })
@@ -65,16 +66,27 @@ function triggerRecording(isRecording) {
         let body = {
             "recording": isRecording           
          }
-
+        
         apiInstance.patchConversationsChatParticipant(myParams.conversationId, myParams.participantId, body)
         .then((data) => {
             console.log(`patchConversationsChatParticipant success! data: ${JSON.stringify(data, null, 2)}`);
             localStorage.setItem('participantId', myParams.participantId);
+
+            document.getElementById("send").disabled = isRecording;
+            document.getElementById("cancel").disabled = !isRecording;
+            document.getElementById("save").disabled = isRecording;
             resolve();
+
+    
         })
         .catch((err) => {
             console.log('There was a failure calling patchConversationsChatParticipant');
             console.error(err);
+
+            document.getElementById("send").disabled = !isRecording;
+            document.getElementById("cancel").disabled = isRecording;
+            document.getElementById("save").disabled = !isRecording;
+
             reject("Failed to place a Call");
         });
 
@@ -100,6 +112,8 @@ function saveRecording(conversationId) {
 
                 //Delete the user file               
                 deleteUserRecording(recordingId);            
+
+                document.getElementById("save").disabled = true;
             })
           }
    
