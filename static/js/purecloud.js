@@ -1,14 +1,14 @@
 // **** Token Implicit Grant (Browser) - UserLogin ****
 let redirectUri = 'https://szlaskidaniel.github.io/purecloud-place-call/index.html';
-//redirectUri = 'https://localhost/index.html';
+redirectUri = 'http://localhost:5500/index.html';
 const platformClient = require('platformClient');
 const client = platformClient.ApiClient.instance;
-
 client.setEnvironment("mypurecloud.ie");
 client.setPersistSettings(true);
 
 
 let apiInstance = new platformClient.ConversationsApi();
+let recordingsApiInstance = new platformClient.UserRecordingsApi();
 
 let myParams = {
     conversationId: getUrlVars()['conversationId'],
@@ -18,7 +18,6 @@ let myParams = {
 
 
 function login(_state) {
-
     return new Promise(function (resolve, reject) {
         // Authenticate
         client.loginImplicitGrant("1b831a39-844c-4dce-9f7a-2ec29a88ddae", redirectUri , { state: _state })
@@ -58,50 +57,23 @@ client.loginImplicitGrant("1b831a39-844c-4dce-9f7a-2ec29a88ddae", redirectUri, {
 
 
 
-function placeCall(aPhoneNumber, aQueueName) {
-    console.log('postConversationsCalls')
-    return new Promise(function (resolve, reject) {
+function triggerRecording(isRecording) {
+    console.log(`Setting recording to ${isRecording} for conversation:${myParams.conversationId}, participant: ${myParams.participantId}`);
 
-
-        let body = {
-            "phoneNumber": aPhoneNumber,
-            "callFromQueueId": aQueueName           
-        }
-
-        apiInstance.postConversationsCalls(body)
-            .then((data) => {
-                console.log(`postConversationsCalls success! data: ${JSON.stringify(data, null, 2)}`);
-                resolve();
-            })
-            .catch((err) => {
-                console.log('There was a failure calling postConversationsCalls');
-                console.error(err);
-                reject("Failed to place a Call");
-            });
-    });
-}
-
-function consultTransfer() {
-    console.log('consultTransfer')
     return new Promise(function (resolve, reject) {
         
         let body = {
-            "speakTo": "BOTH",
-            "destination": {
-               "address": myParams.remoteNumber
-            }
+            "recording": isRecording           
          }
 
-        console.log('make consult', body);
-
-        apiInstance.postConversationsCallParticipantConsult(myParams.conversationId, myParams.participantId, body)
+        apiInstance.patchConversationsChatParticipant(myParams.conversationId, myParams.participantId, body)
         .then((data) => {
-            console.log(`postConversationsCallParticipantConsult success! data: ${JSON.stringify(data, null, 2)}`);
+            console.log(`patchConversationsChatParticipant success! data: ${JSON.stringify(data, null, 2)}`);
             localStorage.setItem('participantId', myParams.participantId);
             resolve();
         })
         .catch((err) => {
-            console.log('There was a failure calling postConversationsCallParticipantConsult');
+            console.log('There was a failure calling patchConversationsChatParticipant');
             console.error(err);
             reject("Failed to place a Call");
         });
@@ -109,26 +81,126 @@ function consultTransfer() {
     });
 }
 
-function consultTransferCancel() {
-    console.log('consultTransferCancel')
+function saveRecording(conversationId) {
+
+    getAllUserRecordings().then(async (recordings) => {         
+        let conversationRecordings = recordings.filter(x=>x.conversation.id === myParams.conversationId);
+        console.log('Conversation Recordings Found:', conversationRecordings);
+
+        for (let i = 0; i < conversationRecordings.length; i++) {
+            let recordingId = conversationRecordings[i].id;
+            downloadUserRecording(recordingId).then(async(recordingDownloadResponse)=> {
+               
+                //save the downloaded recording
+                console.log('downloaded recording', recordingDownloadResponse);
+                var a = document.createElement("a");
+                a.href = recordingDownloadResponse.contentLocationUri;
+                a.setAttribute("download", 'recording_download.wav');
+                a.click();
+
+                //Delete the user file               
+                deleteUserRecording(recordingId);            
+            })
+          }
+   
+    }).catch((err) => {
+        console.error("Failed to call API");                    
+        //showMessage(err, true);
+    });
+
+  
+    
+}
+
+
+
+
+function triggerRecording(isRecording) {
+    console.log(`Setting recording to ${isRecording} for conversation:${myParams.conversationId}, participant: ${myParams.participantId}`);
+
     return new Promise(function (resolve, reject) {
         
-        let body = {}
-        let cachedParticipantId = localStorage.getItem('participantId');
-        apiInstance.deleteConversationsCallParticipantConsult(myParams.conversationId, cachedParticipantId)
+        let body = {
+            "recording": isRecording           
+         }
+
+        apiInstance.patchConversationsChatParticipant(myParams.conversationId, myParams.participantId, body)
         .then((data) => {
-            console.log(`deleteConversationsCallParticipantConsult success! data: ${JSON.stringify(data, null, 2)}`);
+            console.log(`patchConversationsChatParticipant success! data: ${JSON.stringify(data, null, 2)}`);        
             resolve();
         })
         .catch((err) => {
-            console.log('There was a failure calling deleteConversationsCallParticipantConsult');
+            console.log('There was a failure calling patchConversationsChatParticipant');
             console.error(err);
-            reject("Failed to cancel transfer");
+            reject("Failed to place a Call");
         });
 
     });
 }
 
+function deleteUserRecording(recordingId) {
+    console.log(`Deleting User Recording: ${recordingId}`);
+
+    return new Promise(function (resolve, reject) {      
+        recordingsApiInstance.deleteUserrecording(recordingId)
+        .then((data) => {
+            console.log(`deleteUserRecording success! data: ${JSON.stringify(data, null, 2)}`);        
+            resolve(data);
+        })
+        .catch((err) => {
+            console.log('There was a failure calling deleteUserRecording');
+            console.error(err);
+            reject("Failed to delete user recording");
+        });
+
+    });
+}
+
+function getAllUserRecordings() {
+    console.log(`Getting all user recordings.`);
+
+    let opts = { 
+        'pageSize': 25, // Number | Page size
+        'pageNumber': 1, // Number | Page number
+        'expand': ["expand_example"] // [String] | Which fields, if any, to expand.
+      };
+      
+    return new Promise(function (resolve, reject) {      
+        recordingsApiInstance.getUserrecordings(opts)
+        .then((data) => {
+            console.log(`getUserRecordings success! data: ${JSON.stringify(data, null, 2)}`);        
+            resolve(data.entities);
+        })
+        .catch((err) => {
+            console.log('There was a failure calling getUserRecordings');
+            console.error(err);
+            reject("Failed to place a Call");
+        });
+
+    });
+}
+
+function downloadUserRecording(recordingId) {
+    console.log(`Downloading user recording ${recordingId}`);
+
+    let opts = { 
+        'formatId': "WAV" // String | The desired media format.
+      };
+      
+    return new Promise(function (resolve, reject) {      
+        recordingsApiInstance.getUserrecordingMedia(recordingId, opts)
+        .then((data) => {
+            console.log(`downloadUserRecordingMedia success! data: ${JSON.stringify(data, null, 2)}`);        
+            resolve(data);
+        })
+        .catch((err) => {
+            console.log('There was a failure calling getUserRecordings');
+            console.error(err);
+            reject("Failed to place a Call");
+        });
+
+    });
+}
 
 function getUrlVars() {
     var vars = [], hash;

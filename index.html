@@ -1,4 +1,6 @@
 <html>
+    
+    https://apps.mypurecloud.ie/directory/#/engage/admin/interactions/3fc232bf-b5d4-4611-9803-f4d74342c148
 
 <head>
     <meta charset="utf-8">
@@ -23,69 +25,19 @@
     <script src="static/js/purecloud.js"></script>
     <script src="static/js/notifications.js"></script>
 
-    <center>
 
         <div>
-
             <br>
             <button type="button" id="send" class="btn btn-info" disabled>Start Recording</button>
             <button type="button" id="cancel" class="btn btn-info" disabled>Stop Recording</button>
-
-            <!--  <input type="text" id="txtMessage" class="form-control" placeholder="message body"></input> -->
-
+            <button type="button" id="save" class="btn btn-info" enabled>Save Recording</button>
         </div>
         <br>
-        <!-- <input type="text" id="txtPhoneNumber" class="" placeholder="phoneNumber" width="200px"></input> -->
 
-    </center>
-    <script>
+    <script>        
 
-        let state;
-
-        // Read a page's GET URL variables and return them as an associative array.
-
-        function getUrlVars() {
-            var vars = [], hash;
-            var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
-            for (var i = 0; i < hashes.length; i++) {
-                hash = hashes[i].split('=');
-                vars.push(hash[0]);
-                vars[hash[0]] = hash[1];
-            }
-            return vars;
-        }
-
-        // let initState = {
-        //     conversationId: getUrlVars()['conversationId'],
-        //     participantId: getUrlVars()['participantId'],
-        //     remoteNumber: getUrlVars()['remoteNumber']
-        // }
-
- 
-        // async function init() {
-        //     console.log('Wait for login...');
-        //     state = await login(initState);           
-        // } 
-
-        // let queueId = getUrlVars()["queueId"];
-        // let phoneNumber = getUrlVars()["phoneNumber"];
-
-        // let conversationId = conversationId ? conversationId : getUrlVars()["conversationId"];
-        // let participantId = participantId ? participantId : getUrlVars()["participantId"];
-        // let remoteNumber = remoteNumber ? remoteNumber : getUrlVars()["remoteNumber"];
-
-        // Fix PhoneNumber. In case it is tel: at the begining.
-        // if (phoneNumber && phoneNumber.length > 5) {
-        //     if (phoneNumber.substring(0, 4) == 'tel:') {
-        //         phoneNumber = phoneNumber.substring(4)
-
-        //     }
-        // }
-
-        //$("#txtPhoneNumber").val(phoneNumber);
-
-        $("#send").click(() => {                        
-            consultTransfer().then(async (requests) => {
+        $("#send").click(() => {                           
+            triggerRecording(true).then(async (requests) => {
                     console.log('success');
 
                 }).catch((err) => {
@@ -96,8 +48,9 @@
         });
 
         $("#cancel").click(() => {
-            consultTransferCancel().then(async (requests) => {                
+            triggerRecording(false).then(async (requests) => {
                     console.log('success');
+                    document.getElementById("save").disabled = false;
                 }).catch((err) => {
                     console.error("Failed to call API");                    
                     //showMessage(err, true);
@@ -105,6 +58,16 @@
 
         });
 
+        $("#save").click(() => {
+            console.log('Saving the recording');
+            saveRecording().then(async (requests) => {
+                    console.log('success');                   
+                }).catch((err) => {
+                    console.error("Failed to call API");                    
+                    //showMessage(err, true);
+                });
+
+        });
     </script>
 
 
