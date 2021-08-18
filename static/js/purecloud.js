@@ -1,6 +1,6 @@
 // **** Token Implicit Grant (Browser) - UserLogin ****
-let redirectUri = 'https://szlaskidaniel.github.io/purecloud-place-call/index.html';
-redirectUri = 'http://localhost:5500/index.html';
+let redirectUri = 'https://samgreat1.github.io/gc-adhoc-recordings/index.html';
+// redirectUri = 'http://localhost:5500/index.html';
 const platformClient = require('platformClient');
 const client = platformClient.ApiClient.instance;
 client.setEnvironment("mypurecloud.ie");
