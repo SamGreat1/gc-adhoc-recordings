@@ -17,27 +17,6 @@ let myParams = {
 };
 
 
-function login(_state) {
-    return new Promise(function (resolve, reject) {
-        // Authenticate
-        client.loginImplicitGrant("1b831a39-844c-4dce-9f7a-2ec29a88ddae", redirectUri , { state: _state })
-        .then((data) => {
-            // Make request to GET /api/v2/users/me?expand=presence
-            console.log('Logged-In');
-            console.log(data.state);
-            resolve(data.state);
-        })
-        .catch((err) => {
-        // Handle failure response
-            console.log(err);
-            reject();
-        });
-
-        //#endregion
-
-    });
-}
-
 
 client.loginImplicitGrant("1b831a39-844c-4dce-9f7a-2ec29a88ddae", redirectUri, { state: myParams })
 .then((data) => {
@@ -45,9 +24,7 @@ client.loginImplicitGrant("1b831a39-844c-4dce-9f7a-2ec29a88ddae", redirectUri, {
     console.log('Logged-In v3'); 
     if (data?.state?.conversationId) {
         myParams = data.state;
-        document.getElementById("send").disabled = false;
-        document.getElementById("cancel").disabled = false;
-        document.getElementById("save").disabled = false;
+        document.getElementById("send").disabled = false;      
     };      
     console.log(myParams); 
 })
@@ -69,8 +46,12 @@ function triggerRecording(isRecording) {
         
         apiInstance.patchConversationsChatParticipant(myParams.conversationId, myParams.participantId, body)
         .then((data) => {
-            console.log(`patchConversationsChatParticipant success! data: ${JSON.stringify(data, null, 2)}`);
+            console.log(`patchConversationsChatParticipant success! data1: ${JSON.stringify(data, null, 2)}`);
             localStorage.setItem('participantId', myParams.participantId);   
+
+            //updating the    
+            document.getElementById("cancel").disabled = !isRecording;    
+            document.getElementById("send").disabled = isRecording;    
             resolve();
 
     
@@ -102,7 +83,9 @@ function saveRecording(conversationId) {
                 a.click();
 
                 //Delete the user file               
-                deleteUserRecording(recordingId);            
+                deleteUserRecording(recordingId);  
+                
+                document.getElementById("save").disabled = true;    
             })
           }
    
@@ -113,32 +96,6 @@ function saveRecording(conversationId) {
 
   
     
-}
-
-
-
-
-function triggerRecording(isRecording) {
-    console.log(`Setting recording to ${isRecording} for conversation:${myParams.conversationId}, participant: ${myParams.participantId}`);
-
-    return new Promise(function (resolve, reject) {
-        
-        let body = {
-            "recording": isRecording           
-         }
-
-        apiInstance.patchConversationsChatParticipant(myParams.conversationId, myParams.participantId, body)
-        .then((data) => {
-            console.log(`patchConversationsChatParticipant success! data: ${JSON.stringify(data, null, 2)}`);        
-            resolve();
-        })
-        .catch((err) => {
-            console.log('There was a failure calling patchConversationsChatParticipant');
-            console.error(err);
-            reject("Failed to place a Call");
-        });
-
-    });
 }
 
 function deleteUserRecording(recordingId) {
